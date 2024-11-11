@@ -10,7 +10,7 @@ This script connects to each server in the list and checks if each specified pat
 
 (by KB number) is installed. It outputs the installation status of each patch on each server.
 
-.Author Kenny Gossow
+.Author Keensy
 
 .Date 11/11/24
  
