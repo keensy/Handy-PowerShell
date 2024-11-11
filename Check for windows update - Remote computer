@@ -1,0 +1,52 @@
+<#
+
+.SYNOPSIS
+
+Checks if specified Windows patches are installed on a list of remote servers.
+
+.DESCRIPTION
+
+This script connects to each server in the list and checks if each specified patch 
+
+(by KB number) is installed. It outputs the installation status of each patch on each server.
+
+.Author Kenny Gossow
+
+.Date 11/11/24
+ 
+#>
+
+# Define the list of servers and patches
+
+$servers = @("Server1", "Server2") # Replace with your server names
+
+$patches = @("KB5042881", "KB5042880") # Replace with the KB numbers to check
+
+ 
+
+# Loop through each server and patch, and check installation status
+
+foreach ($computerName in $servers) {
+
+foreach ($patch in $patches) {
+
+$hotfix = Get-WmiObject -Query "Select * from Win32_QuickFixEngineering Where HotFixID='$patch'" -ComputerName $computerName -ErrorAction SilentlyContinue
+
+$status = if ($hotfix) { "Installed" } else { "Not Installed" }
+
+# Output result as a simple object
+
+[PSCustomObject]@{
+
+"Server Name" = $computerName
+
+"Patch" = $patch
+
+"Status" = $status
+
+}
+
+}
+
+}
+
