@@ -1,0 +1,23 @@
+<#
+.SYNOPSIS
+This script checks all print servers named Printserver* and exports printers to a report to be mapped later
+
+.DESCRIPTION
+  
+
+.NOTES
+  Version:        1.0
+  Author:  kensy 
+  Creation Date:  12/08/2021
+ 
+#>
+#---------------------------------------------------------[Initialisations]--------------------------------------------------------
+# Gather all printers from print servers
+$printers = foreach ($Printerservers in (Get-ADComputer -filter {name -like "*Printserver*"}).name){Get-WMIObject -Class Win32_Printer -Computer $Printerservers| Select Name,DriverName,PortName,Shared,ShareName,SystemName}                              
+#----------------------------------------------------------[Declarations]----------------------------------------------------------
+#Script Version
+$sScriptVersion = "1.0"
+#-----------------------------------------------------------[Functions]------------------------------------------------------------
+
+# Export printers to report location and overwrite existing values in csv
+$printers|export-csv "Enter Export Path Here" -NoTypeInformation -Force
