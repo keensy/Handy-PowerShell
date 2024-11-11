@@ -1,0 +1,45 @@
+<#
+.Purpose/Action:
+
+Synopsis:
+    This script automates the process of migrating users from one Active Directory group to another based on their membership in a specified CSV file and the employeeID attribute in Active Directory (AD).
+
+Description:
+    The script reads user data from a CSV file and filters it against the employeeID attribute in AD to identify users. It then adds the identified users to a new AD group while removing them from an old AD group. This helps streamline user management tasks and ensures accurate group membership assignments.
+
+Steps:
+
+1. Specify the name of the new group in Active Directory.
+2. Specify the name of the old group in Active Directory.
+3. Retrieve the members of the old group from Active Directory.
+4. For each member of the old group:
+    a. Add the member to the specified new AD group.
+5. Catch any errors that occur during the process and echo the error message.
+
+.NOTES
+    Version: 1.0
+    Author: Kenny Gossow
+    Creation Date: 26/03/24
+#>
+
+#---------------------------------------------------------[Initializations]--------------------------------------------------------
+
+# Specify the name of the new group in Active Directory
+$NewGroup = "Enter new group name here"
+
+# Specify the name of the old group in Active Directory
+$OldGroup = "Enter old group name here"
+
+#-----------------------------------------------------------[Functions]------------------------------------------------------------
+
+try {
+    # Retrieve the members of the old group from Active Directory
+    (Get-ADGroup -Filter { Name -eq $OldGroup } -Properties Members -ErrorAction SilentlyContinue).Members | ForEach-Object {
+        # Add the matched user to the specified new AD group
+        Add-ADGroupMember -Identity $NewGroup -Members $_
+    }
+} catch {
+    # Catch any errors that occur during the process
+    # Echo the error message
+    Write-Host ($_.Exception.Message)
+}
