@@ -1,0 +1,62 @@
+﻿<#
+.SYNOPSIS
+   This script generates a report for all directories under a specified path. The report includes information such as directory name, full path, last access time, write permissions, and read permissions.
+
+.DESCRIPTION
+    The script iterates through each directory under the specified root path, retrieves relevant details, and creates a custom object for each directory. The collected information is then exported to a CSV file.
+
+.NOTES
+    Version: 1.0
+    Author: Keensy
+    Creation Date: 02/01/2024
+#>
+
+#---------------------------------------------------------[Initialisations]--------------------------------------------------------
+
+# Specify the root directory path
+$path = "Enter Path Here"
+
+# Get the current date and time
+$Date = Get-Date
+
+# Get the logged-in user
+$User = $env:USER
+
+# Get all directories under the specified path
+$directories = Get-ChildItem -Path $path -Directory
+
+# Specify the location for logging errors
+$logLocation = "C:\Source\DirectoryReport.log"
+
+# Specify the output path for the CSV report
+$FinalReportOutput = "c:\source\DirectoryReport.csv"
+
+#-------------------------------------------------------------[Start]--------------------------------------------------------------
+
+# Use a try-catch block to handle errors
+try
+{
+    # Build directory report
+    $FinalReport = foreach ($Report in $directories)
+    {
+        # Create a custom object for each directory
+        [PSCustomObject]@{
+            Name                = $Report.Name
+            Members             = $Report.FullName
+            "Last Access Time"  = $Report.LastAccessTime
+            "Write Permissions" = ((Get-Acl $Report.FullName).Access | Where-Object { $_.FileSystemRights -band ([System.Security.AccessControl.FileSystemRights]::Write) -eq [System.Security.AccessControl.FileSystemRights]::Write } | Select-Object -ExpandProperty IdentityReference) -join ', '
+            "Read Permissions"  = ((Get-Acl $Report.FullName).Access | Where-Object { $_.FileSystemRights -band ([System.Security.AccessControl.FileSystemRights]::Read) -eq [System.Security.AccessControl.FileSystemRights]::Read } | Select-Object -ExpandProperty IdentityReference) -join ', '
+        }
+    }
+
+    # Export report to a CSV file
+    $FinalReport | Export-Csv -Path $FinalReportOutput -NoTypeInformation   
+}
+catch 
+{
+    # Handle any errors encountered during script execution
+    Write-Host "$_.Exception.Message"
+
+    # Log the error message along with additional information
+    "[Report run by $User on $Date for all directories in $path :: ERROR] " + $_.Exception.Message >> $logLocation
+}
