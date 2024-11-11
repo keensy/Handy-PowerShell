@@ -2,10 +2,7 @@
 .Purpose/Action:
 
 Synopsis:
-    This script automates the process of migrating users from one Active Directory group to another based on their membership in a specified CSV file and the employeeID attribute in Active Directory (AD).
-
-Description:
-    The script reads user data from a CSV file and filters it against the employeeID attribute in AD to identify users. It then adds the identified users to a new AD group while removing them from an old AD group. This helps streamline user management tasks and ensures accurate group membership assignments.
+    Migrates users from one group to another
 
 Steps:
 
