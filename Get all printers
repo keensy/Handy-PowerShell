@@ -7,7 +7,7 @@ This script checks all print servers named Printserver* and exports printers to 
 
 .NOTES
   Version:        1.0
-  Author:  kensy 
+  Author:  keensy 
   Creation Date:  12/08/2021
  
 #>
