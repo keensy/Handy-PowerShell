@@ -1,0 +1,27 @@
+<#
+.SYNOPSIS
+  Schedule Reboot delayed reboot
+
+.DESCRIPTION
+  Calculate the total number of seconds until the scheduled restart.
+  The command retrieves the current date and time using Get-Date,
+  adds the specified number of hours to it, and then calculates
+  the time span from the current time to the new future time.
+
+.NOTES
+  Version:        1.0
+  Author:         Keensy
+  Creation Date:  04/10/2024
+#>
+
+#---------------------------------------------------------[Initialisations]--------------------------------------------------------
+# Set the variable $hours to the desired number of hours before the system will restart.
+$hours = 4                    
+
+#-----------------------------------------------------------[Script Start]------------------------------------------------------------
+# The total seconds of this time span is rounded to the nearest decimal.
+shutdown -r -t ([decimal]::round((New-TimeSpan -Start (Get-Date) -End (Get-Date).AddHours($hours)).TotalSeconds))
+
+# This command cancels any scheduled shutdown. 
+# It is useful if you decide not to proceed with the restart after scheduling it.
+shutdown /a
