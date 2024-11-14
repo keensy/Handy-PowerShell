@@ -1,0 +1,39 @@
+<#
+.SYNOPSIS
+This script sets the system time zone based on the Australian state entered by the user.
+
+.DESCRIPTION
+This script prompts the user to enter an Australian state abbreviation (e.g., NSW, QLD, VIC, etc.).
+It checks if the entered state is valid and sets the corresponding time zone for the system.
+If an unrecognized state is entered, the script notifies the user to enter a valid state.
+
+.NOTES
+  Version:        1.0
+  Author:         Keensy
+  Creation Date:  14/11/2024
+#>
+
+# Define a hashtable with Australian states and corresponding time zones
+$timeZones = @{
+    "NSW"  = "AUS Eastern Standard Time"
+    "VIC"  = "AUS Eastern Standard Time"
+    "QLD"  = "E. Australia Standard Time"
+    "SA"   = "Cen. Australia Standard Time"
+    "WA"   = "W. Australia Standard Time"
+    "TAS"  = "Tasmania Standard Time"
+    "NT"   = "AUS Central Standard Time"
+    "ACT"  = "AUS Eastern Standard Time"
+}
+
+# Prompt the user to enter the state
+$state = Read-Host "Please enter the name of your state (e.g., QLD, VIC, NSW, NT, WA, SA)"
+
+# Check if the entered state exists in the hashtable
+if ($timeZones.ContainsKey($state)) {
+    # Set the time zone based on the entered state
+    $timeZoneName = $timeZones[$state]
+    Set-TimeZone -Name $timeZoneName
+    Write-Output "Time zone set to $timeZoneName for $state."
+} else {
+    Write-Output "State not recognized. Please make sure to enter a valid Australian state."
+}
