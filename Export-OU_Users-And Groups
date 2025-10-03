@@ -1,0 +1,58 @@
+<#
+.SYNOPSIS
+  Export all AD users from a specific OU with group memberships, display name, and description.
+
+.DESCRIPTION
+  This script queries Active Directory for all users in the specified OU.
+  It exports their username, display name, description, and group memberships into a CSV file.
+
+.NOTES
+  Version:        1.0
+  Author:         Keensy
+  Creation Date:  19/03/2018
+#>
+
+#---------------------------------------------------------[Initialisations]--------------------------------------------------------
+# Define OU and export path
+$OU     = "Enter OU Here"
+$Export = "C:\temp\ADUserGroupsList.csv"
+
+#---------------------------------------------------------[Functions]--------------------------------------------------------------
+<#
+.SYNOPSIS
+  Get AD users from a given OU with group memberships.
+
+.DESCRIPTION
+  This function searches AD for all users in the specified OU and collects:
+  - samAccountName
+  - DisplayName
+  - Description
+  - Group memberships (semicolon separated)
+#>
+function Get-ADUsersWithGroups ($OU) {
+    try {
+        Get-ADUser -SearchBase $OU -Filter * -Properties memberOf, displayName, description |
+        Select-Object `
+            samAccountName,
+            displayName,
+            description,
+            @{Name='memberOf';Expression={ ($_.memberOf | ForEach-Object { $_.Split(',')[0].Split('=')[1] }) -join ';' }}
+    }
+    catch {
+        Write-Host ("Error querying AD: " + $_.Exception.Message)
+    }
+}
+
+#-----------------------------------------------------------[Start]---------------------------------------------------------------
+try {
+    # Run function
+    $Report = Get-ADUsersWithGroups -OU $OU
+
+    # Export to CSV
+    $Report | Export-Csv -Path $Export -NoTypeInformation -append
+
+    Write-Host "Report exported to $Export"
+}
+catch {
+    Write-Host ("Fatal error: " + $_.Exception.Message)
+}
