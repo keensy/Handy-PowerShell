@@ -1,0 +1,44 @@
+<#
+.SYNOPSIS
+    This script is designed to help audit an OU permissions.
+
+.NOTES
+    Version: 1.0
+    Author: Kkeensy
+    Creation Date: 16/05/23
+#>
+
+#---------------------------------------------------------[Initializations]--------------------------------------------------------
+
+# Import ActiveDirectory Module
+Import-Module ActiveDirectory
+
+# Organisational unit to audit
+$OU = "Enter OU"
+$export = "Enter CSV Path"
+
+# Set location to Active Directory
+Set-Location AD:
+
+#-----------------------------------------------------------[Functions]------------------------------------------------------------
+
+# Create a report for each Access Control List (ACL) in the Organisational Unit (OU)
+$ouReport = foreach ($OUAcl in (Get-Acl $OU).Access) {
+    [pscustomobject]@{ 
+        "Organizational Unit"     = $OU
+        "Date"                    = Get-Date
+        "Active Directory Rights" = $OUAcl.ActiveDirectoryRights
+        "Inheritance Type"        = $OUAcl.InheritanceType        
+        "Object Type"             = $OUAcl.ObjectType
+        "Inherited Object Type"   = $OUAcl.InheritedObjectType
+        "Object Flags"            = $OUAcl.ObjectFlags
+        "Access Control Type"     = $OUAcl.AccessControlType
+        "Identity Reference"      = $OUAcl.IdentityReference
+        "Is Inherited"            = $OUAcl.IsInherited
+        "Inheritance Flags"       = $OUAcl.InheritanceFlags
+        "Propagation Flags"       = $OUAcl.PropagationFlags
+    }   
+}
+
+# Export the report to CSV
+$ouReport | Export-Csv -Path $export -NoTypeInformation -Append
