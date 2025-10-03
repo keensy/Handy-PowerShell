@@ -1,0 +1,66 @@
+<#
+.SYNOPSIS
+    [One-line summary of the script’s purpose]
+
+.DESCRIPTION
+    [Detailed description of what the script does, steps it performs, and any special notes.
+     Include environment or system-specific context if needed.]
+
+.PARAMETER [ParameterName]
+    [Description of parameters if your script uses any]
+
+.EXAMPLE
+    [Example of how to run the script]
+
+.NOTES
+    Filename:       [ScriptName].ps1
+    Author:         Keensy
+    Version:        1.0
+    Date:           [Creation Date]
+    Environment:    [Optional: DEV / PROD / VM / etc.]
+#>
+
+#---------------------------------------------------------[Initialisations]--------------------------------------------------------
+<# 
+    Initialise variables, paths, log locations, module imports, or any constants used in the script. 
+#>
+# Example:
+# $LogPath = "C:\Temp\ScriptLog.txt"
+# Import-Module ActiveDirectory
+
+#---------------------------------------------------------[Functions]-----------------------------------------------------------
+<#
+    Define all functions here with proper comment-based help for each function.
+    Each function should have its own .SYNOPSIS, .DESCRIPTION, .PARAMETER, .EXAMPLE, .NOTES blocks.
+#>
+# Example:
+# function Get-FileName {
+#     [CmdletBinding()]
+#     param (
+#         [string]$InitialDirectory = "C:\"
+#     )
+#     <# Function logic here #>
+# }
+
+#---------------------------------------------------------[Execution]-----------------------------------------------------------
+<#
+    Main script execution logic.
+    - Import CSV or input files
+    - Loop through objects
+    - Call functions
+    - Handle errors with try/catch
+    - Write logs or output results
+#>
+# Example:
+# try {
+#     $Data = Import-Csv -Path $CsvPath
+#     foreach ($Item in $Data) {
+#         # Do something
+#     }
+# }
+# catch {
+#     Write-Host "Error: $($_.Exception.Message)"
+# }
+# finally {
+#     # Clean-up code or stop logging
+# }
