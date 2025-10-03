@@ -1,0 +1,48 @@
+<#
+.SYNOPSIS
+  Run a batch script remotely on multiple servers from a CSV list.
+
+.DESCRIPTION
+  This script reads a CSV file with a 'Hostname' column and runs a batch script on each listed server.
+
+.NOTES
+  Version:        1.0
+  Author:         Keensy
+  Creation Date:  19/09/2025
+#>
+
+#---------------------------------------------------------[Initialisations]--------------------------------------------------------
+$CSV = "C:\Path\To\YourCSV.csv"           # CSV must have a 'Hostname' column
+$BatchScriptPath = "C:\Scripts\MyScript.bat"  # Path to batch file on remote machine
+#---------------------------------------------------------[Functions]--------------------------------------------------------
+
+function start-batch ($CSV, $BatchScriptPath)
+{
+    foreach ($computer in (Import-Csv $CSV)) {
+        Write-Host "Running batch script on $($computer.Hostname)..." -ForegroundColor Cyan
+
+        try {
+            Invoke-Command -ComputerName $computer.Hostname -ScriptBlock {
+                param ($remoteBatchPath)
+
+                Write-Host "Executing batch script: $remoteBatchPath" -ForegroundColor Yellow
+                cmd.exe /c $remoteBatchPath
+
+            } -ArgumentList $BatchScriptPath -ErrorAction Stop
+        }
+        catch {
+            Write-Error "Failed on $($computer.Hostname): $_"
+        }
+    }
+}
+
+#-----------------------------------------------------------[Start]------------------------------------------------------------
+
+try {
+    start-batch $CSV $BatchScriptPath
+}
+catch {
+    Write-Error "Error occurred: $_"
+}
+  
+                                           
