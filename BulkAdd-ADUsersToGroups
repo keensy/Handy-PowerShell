@@ -1,0 +1,79 @@
+<#
+.SYNOPSIS
+    Adds users to specified AD groups from a CSV file.
+
+.DESCRIPTION
+    - Prompts the admin to select a CSV file.
+    - Imports users from the CSV.
+    - Adds each user to predefined Active Directory groups.
+    - Logs all activity to a timestamped log file.
+
+.NOTES
+    Author: Keensy
+    Version: 1.1
+    Date:   25/09/2019
+#>
+
+#---------------------------------------------------------[Initialisations]--------------------------------------------------------
+
+# Get date/time for log naming
+$Date     = Get-Date -UFormat %b-%m-%Y
+$Hour     = (Get-Date).Hour
+$Minutes  = (Get-Date).Minute
+$LogPath  = "C:\Source\BulkAddUsersToGroup-$Date-$Hour-$Minutes.log"
+
+# Start logging
+Start-Transcript -Path $LogPath -Force
+
+# Import AD module
+Import-Module ActiveDirectory -ErrorAction Stop
+
+#---------------------------------------------------------[Functions]--------------------------------------------------------
+
+function Get-FileName($InitialDirectory = "C:\") {
+    Add-Type -AssemblyName System.Windows.Forms
+    $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+    $OpenFileDialog.InitialDirectory = $InitialDirectory
+    $OpenFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*"
+    $null = $OpenFileDialog.ShowDialog()
+    return $OpenFileDialog.FileName
+}
+
+#---------------------------------------------------------[Execution]--------------------------------------------------------
+
+try {
+    # Select CSV
+    $FilePath    = Get-FileName
+    $Spreadsheet = Import-Csv $FilePath
+
+    # Predefined AD Groups
+    $Groups = @(
+        "Group-One",
+        "Group-Two",
+        "Group-Three",
+        "Group-Four",
+        "Group-Five"
+    )
+
+    foreach ($Object in $Spreadsheet) {
+        $User = $Object.sAMAccountName
+
+        foreach ($Group in $Groups) {
+            try {
+                Add-ADGroupMember -Identity $Group -Members $User -ErrorAction Stop
+                Write-Host "Added $User to $Group" -ForegroundColor Green
+                Start-Sleep -Milliseconds 500
+            }
+            catch {
+                Write-Host "Failed to add $User to $Group: $($_.Exception.Message)" -ForegroundColor Red
+            }
+        }
+    }
+}
+catch {
+    Write-Host "Script failed: $($_.Exception.Message)" -ForegroundColor Red
+}
+finally {
+    # Stop logging
+    Stop-Transcript
+}
