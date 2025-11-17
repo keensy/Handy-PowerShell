@@ -1,0 +1,96 @@
+<#
+.Purpose/Action:
+    Export the running configuration from an Aruba switch using SSH.
+ 
+.Synopsis:
+    Connects to the Aruba device, disables paging, runs 
+    'show running-config', retrieves the output, and saves it to file.
+ 
+.Steps:
+    1. Specify the IP/hostname of the Aruba switch.
+    2. Specify the output file location.
+    3. Connect to the switch using Posh-SSH.
+    4. Disable paging for full output.
+    5. Run "show running-config".
+    6. Save the output.
+    7. Catch any errors and echo them.
+ 
+.NOTES
+    Version:        1.0
+    Author:         Keensy
+    Creation Date:  17/11/25
+#>
+ 
+#---------------------------------------------------------[Initializations]--------------------------------------------------------
+ 
+# Specify the IP or hostname of the Aruba switch
+$SwitchIP   = "Swith IP Here"
+ 
+# Specify where to save the configuration output
+$OutputFile = "C:\temp\ArubaConfig-Report.txt"
+
+# Create credential prompt
+$Cred = Get-Credential
+ 
+#-----------------------------------------------------------[Functions]------------------------------------------------------------
+ 
+ function get-Aruba ($SwitchIP, $command , $Cred, $OutputFile)
+ {
+        try {
+ 
+                    # Import Posh-SSH (install if missing)
+                    Import-Module Posh-SSH -ErrorAction SilentlyContinue
+                    if (-not (Get-Module -ListAvailable -Name Posh-SSH)) {
+                        Install-Module Posh-SSH -Force
+                    }
+
+                    # Create SSH session
+                    $Session = New-SSHSession -ComputerName $SwitchIP -Credential $Cred
+ 
+                    # Create interactive shell stream
+                    $Stream = New-SSHShellStream -SessionId $Session.SessionId
+ 
+                    Start-Sleep -Seconds 1
+ 
+                    # Enter enable mode (if required)
+                    $Stream.WriteLine("enable")
+                    Start-Sleep -Seconds 1
+ 
+                    # Disable paging for full config
+                    $Stream.WriteLine("terminal length 0")
+                    Start-Sleep -Seconds 1
+ 
+                    $Stream.WriteLine("no page")
+                    Start-Sleep -Seconds 1
+ 
+                    # Run configuration command
+                    $Stream.WriteLine($command)
+                    Start-Sleep -Seconds 5   # Increase if config is larger
+ 
+                    # Read the output
+                    $Output = $Stream.Read()
+ 
+                    # Save configuration to file
+                    $Output | Out-File $OutputFile -Force
+ 
+                    Write-Host "Aruba configuration saved to $OutputFile"
+ 
+                } catch {
+ 
+                    # Catch any errors that occur during the process
+                    Write-Host ($_.Exception.Message)
+ 
+                } finally {
+ 
+                    # Close the SSH session (if established)
+                    if ($Session) {
+                        Remove-SSHSession -SessionId $Session.SessionId | Out-Null
+           }
+}
+ }
+
+#-----------------------------------------------------------[Script Start]------------------------------------------------------------ 
+
+
+
+get-Aruba -SwitchIP $SwitchIP -command "show running-config" -Cred $Cred -OutputFile $OutputFile
