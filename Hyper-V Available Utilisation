@@ -1,0 +1,85 @@
+<#
+.Purpose/Action:
+    Summarise host CPU and memory: total capacity vs assigned to Hyper-V VMs vs available.
+
+.Synopsis:
+    Calculates logical cores and physical memory on the host, sums vCPUs and assigned memory
+    across VMs, and outputs totals, assigned, and available values.
+
+.Description:
+    - CPU capacity = total logical processors on the host
+    - CPU assigned = sum of VM processor counts (vCPUs)
+    - Memory capacity = total physical memory (GB)
+    - Memory assigned = sum of VM MemoryAssigned (GB) (0 for off VMs)
+    - Available = Capacity - Assigned (floored at 0)
+
+.Steps:
+    1. Query host CPU/memory via CIM
+    2. Query VM processor counts and assigned memory
+    3. Compute utilisation/available
+    4. Output summary table
+
+.NOTES
+    Version: 1.1
+    Author: Keensy
+    Creation Date: 27/02/26
+#>
+
+#---------------------------------------------------------[Initializations]--------------------------------------------------------
+# --- Assigned VM Resources ---
+$AssignedMemoryGB = (
+    Get-VM |
+    Select-Object -ExpandProperty MemoryAssigned |
+    Measure-Object -Sum
+).Sum / 1GB
+
+$AssignedCPU = (
+    Get-VM |
+    ForEach-Object { (Get-VMProcessor -VMName $_.Name).Count } |
+    Measure-Object -Sum
+).Sum
+
+# --- Local Machine Resources ---
+# Logical cores (threads)
+$totalLogicalCores = (
+    Get-CimInstance -ClassName Win32_Processor |
+    Measure-Object -Property NumberOfLogicalProcessors -Sum
+).Sum
+
+
+$totalPhysicalCores = (
+    Get-CimInstance -ClassName Win32_Processor |
+    Measure-Object -Property NumberOfCores -Sum
+).Sum
+
+
+
+# Physical RAM in GB
+$totalPhysicalMemGB = (Get-CimInstance -ClassName Win32_ComputerSystem).TotalPhysicalMemory / 1GB
+
+# --- Available Resources (floored at 0 to avoid negatives) ---
+$availableMemoryGB = [math]::Max(0, $totalPhysicalMemGB - $AssignedMemoryGB)
+$availableCPU      = [math]::Max(0, $totalLogicalCores  - $AssignedCPU)
+
+# --- Utilization Percentages ---
+$cpuUtilPct = if ($totalLogicalCores) {
+    [math]::Round(($AssignedCPU / $totalLogicalCores) * 100, 2)
+} else { 0 }
+
+$memUtilPct = if ($totalPhysicalMemGB) {
+    [math]::Round(($AssignedMemoryGB / $totalPhysicalMemGB) * 100, 2)
+} else { 0 }
+
+# --- Output Summary (numeric fields kept numeric for tooling/export) ---
+$summary = [pscustomobject]@{
+    Hostname                            = $env:COMPUTERNAME
+    “Host CPU Count”                    = $totalLogicalCores
+    “Hyper-V Assigned CPU Cores”         = $AssignedCPU
+    “Hyper-V unassigned Cores”           = $availableCPU
+    “Hyper-V  Assigned CPU Utilisation"  = $cpuUtilPct
+
+    “Host Physical Memory GB”                = [math]::Round($totalPhysicalMemGB, 2)
+    “Hyper-V assigned  Memory GB”            = [math]::Round($AssignedMemoryGB, 2)
+    “Hyper-V available Memory GB"            = [math]::Round($availableMemoryGB, 2)
+    "Hyper-V Memory Assignment Utilisation"  = $memUtilPct
+}
