@@ -1,0 +1,45 @@
+<#
+.Purpose/Action:
+    Live migrate all VMs except those in the exclusion list.
+
+.Synopsis:
+    Migrates clustered Hyper-V virtual machines to a specified target node,
+    excluding specific VMs defined in $exclude.
+
+.Description:
+    - Define a list of VMs to exclude.
+    - Retrieve all VMs and filter out excluded names.
+    - For each remaining VM, perform a live migration to the target node.
+    - Errors are handled individually per VM using try/catch.
+
+.Steps:
+    1. Define migration target node and exclusion list.
+    2. Query all VM names with Get-VM.
+    3. Filter out VMs listed in $exclude.
+    4. Attempt migration inside try/catch.
+    5. Output success or failure per VM.
+
+.NOTES
+    Version: 1.0
+    Author: Keensy
+    Creation Date: 27/02/26
+#>
+
+#---------------------------------------------------------[Initializations]---------------------------------------------------------
+
+# Exclude VMs
+$exclude = ('VM1','VM2')
+$MigrationServer = "Enter server to migrate to"
+
+#---------------------------------------------------------[Execution]---------------------------------------------------------------
+
+foreach ($vm in (Get-VM | Where-Object { $exclude -notcontains $_.Name }))
+{
+    try {
+        Move-ClusterVirtualMachineRole -Name $vm.Name -Node $MigrationServer -MigrationType Live -ErrorAction Stop
+        Write-Host "Successfully migrated $($vm.Name) to $MigrationServer"
+    }
+    catch {
+        Write-Warning "Failed to migrate $($vm.Name): $($_.Exception.Message)"
+    }
+}
